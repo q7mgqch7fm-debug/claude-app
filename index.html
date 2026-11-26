@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Claude</title>
+<meta name="theme-color" content="#F9F9F8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#262624" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Claude">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="splash"><div class="splash-logo"><span data-star class="star"></span><span class="wordmark">Claude</span></div><div class="by">ANTHROP\C</div></div>
+
+<div id="app">
+  <header class="top">
+    <button class="icon-btn" id="menuBtn" aria-label="Menu"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 9h13M4 15h8"/></svg></button>
+    <div class="top-title" id="topTitle"></div>
+    <div class="top-right" id="topRight">
+      <button class="icon-btn" id="ghostBtn" aria-label="Chat ẩn danh"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 20V10a7 7 0 0 1 14 0v10l-2.3-1.8L14.3 20 12 18.2 9.7 20l-2.4-1.8z"/><circle cx="9.5" cy="11" r=".6" fill="currentColor"/><circle cx="14.5" cy="11" r=".6" fill="currentColor"/></svg></button>
+      <button class="icon-btn" id="newBtn" aria-label="Chat mới"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-6"/><path d="M18.4 3.6a1.8 1.8 0 0 1 2.5 2.5L12 15l-3.5 1 1-3.5z"/></svg></button>
+      <button class="icon-btn" id="searchBtn" aria-label="Tìm kiếm"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="view active" id="v-chat">
+      <div id="home" class="home">
+        <span data-star class="star hero-star"></span>
+        <h1 id="greeting" class="serif"></h1>
+        <button class="plan" id="planBtn">Free plan · <b>Upgrade</b></button>
+      </div>
+      <div id="thread" class="thread"></div>
+    </section>
+
+    <section class="view" id="v-projects">
+      <div class="empty">
+        <div class="tiles"><i><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></i><i><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9H4z"/></svg></i><i class="on"><svg viewBox="0 0 24 24"><path d="M7 5h10M6 8h12M5 12h14l-1 8H6z"/></svg></i><i><svg viewBox="0 0 24 24"><path d="M4 18c3-8 6-12 8-8s3 8 8-2"/></svg></i><i><svg viewBox="0 0 24 24"><path d="m2 9 10-5 10 5-10 5zM6 11v5c3 2.5 9 2.5 12 0v-5"/></svg></i></div>
+        <h2>Tạo dự án đầu tiên của bạn</h2>
+        <p>Dự án là nhiều phiên chat dựa trên một chủ đề, mảng công việc hoặc bộ tệp.</p>
+        <button class="pill" data-toast="Dự án chưa có trong bản demo">Tạo dự án</button>
+      </div>
+    </section>
+
+    <section class="view" id="v-code">
+      <div class="empty">
+        <div class="mascot-wrap"><svg class="mascot" viewBox="0 0 16 12" shape-rendering="crispEdges"><path fill="#D97757" d="M3 0h8v2h2v2h-2v4H3V4H1V2h2z"/><path fill="#D97757" d="M3 8h2v4H3zm3 0h1v4H6zm3 0h1v4H9zm2 0h2v4h-2z" transform="translate(-1 0) scale(1 .9)"/><rect x="4" y="2" width="1" height="1" fill="#141413"/><rect x="9" y="2" width="1" height="1" fill="#141413"/></svg></div>
+        <h2>Xây dựng với Claude Code</h2>
+        <p>Claude làm việc trực tiếp cùng bạn trong cơ sở mã để thêm tính năng, sửa lỗi và giải thích mã.</p>
+        <button class="pill" id="upgradeBtn">Nâng cấp lên gói Pro</button>
+      </div>
+    </section>
+
+    <section class="view" id="v-artifacts">
+      <div class="empty">
+        <div class="cards"><i class="l"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></i><i class="m"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></i><i class="r"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></i></div>
+        <h2>Tạo artifact đầu tiên của bạn</h2>
+        <p>Claude có thể tạo tài liệu, bài thuyết trình, công cụ cá nhân và nhiều thứ khác.</p>
+        <button class="pill" id="artBtn">Tạo artifact</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="dock" class="dock">
+    <button class="recent" id="recent" hidden></button>
+    <div class="composer">
+      <button class="round soft" id="plusBtn" aria-label="Thêm"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <textarea id="input" rows="1" placeholder="Nhập hoặc giữ để nói" enterkeyhint="send"></textarea>
+      <button class="round soft" id="micBtn" aria-label="Micro"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button class="round ink" id="sendBtn" aria-label="Gửi">
+        <svg class="i-wave" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 11v2M8 8v8M12 5v14M16 8v8M20 11v2"/></svg>
+        <svg class="i-up" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <nav class="tabbar" id="tabbar">
+    <button data-tab="chat" class="on"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.7 7L4 20l1.2-4.4A8 8 0 1 1 21 12z"/></svg><span>Đoạn chat</span></button>
+    <button data-tab="projects"><svg viewBox="0 0 24 24"><path d="M8 4h8M6 7.5h12M5 11h14l-1 9H6z"/></svg><span>Dự án</span></button>
+    <button data-tab="code"><svg viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 5l-3 14"/></svg><span>Code</span></button>
+    <button data-tab="artifacts"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="12" height="14" rx="2.5"/><path d="M9 7V5.5A2.5 2.5 0 0 1 11.5 3h7A2.5 2.5 0 0 1 21 5.5v9a2.5 2.5 0 0 1-2.5 2.5H15"/></svg><span>Artifacts</span></button>
+  </nav>
+
+  <div id="scrim"></div>
+  <aside id="drawer">
+    <div class="d-head"><span data-star class="star"></span><span class="wordmark sm">Claude</span></div>
+    <button class="d-new" id="dNew"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Chat mới</button>
+    <div class="d-label">Gần đây</div>
+    <div class="d-list" id="dList"></div>
+    <button class="d-user" id="settingsBtn"><span class="avatar" id="avatar">f</span><span id="dName">bạn</span><small>Free</small></button>
+  </aside>
+
+  <div id="sheet-wrap"><div id="sheet">
+    <div class="grab"></div>
+    <h3>Cài đặt</h3>
+    <label>Tên của bạn<input id="setName" type="text" placeholder="Tên hiển thị" autocomplete="off"></label>
+    <label>Anthropic API key (tùy chọn)<input id="setKey" type="password" placeholder="sk-ant-..." autocomplete="off" autocapitalize="off"></label>
+    <p class="hint">Có API key thì Claude trả lời thật. Key chỉ lưu trong thiết bị này.</p>
+    <button class="pill wide" id="saveSet">Lưu</button>
+    <button class="link" id="clearAll">Xóa toàn bộ chat</button>
+  </div></div>
+
+  <div id="toast"></div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
