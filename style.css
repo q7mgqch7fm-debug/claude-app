@@ -12,8 +12,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 #splash{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .5s ease .1s,visibility .6s}
 #splash.out{opacity:0;visibility:hidden}
 .splash-logo{display:flex;align-items:center;gap:12px;animation:pop .7s var(--ease) both}
-.splash-logo .star{width:54px;height:54px;animation:spin 1.6s var(--ease) both}
-.wordmark{font-family:Lora,Georgia,serif;font-weight:500;font-size:54px;letter-spacing:-1.5px}.wordmark.sm{font-size:26px;letter-spacing:-.5px}
+.splash-logo .star{width:38px;height:38px;animation:spin 1.6s var(--ease) both}
+.wordmark{font-family:Lora,Georgia,serif;font-weight:500;font-size:38px;letter-spacing:-1.5px}.wordmark.sm{font-size:26px;letter-spacing:-.5px}
 .by{position:absolute;bottom:calc(60px + var(--sab));font-weight:600;letter-spacing:.5px;color:var(--mute);font-size:20px}
 @keyframes pop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
 @keyframes spin{from{transform:rotate(-120deg) scale(.6);opacity:0}to{transform:none;opacity:1}}
@@ -136,3 +136,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;paddin
 .seg button{flex:1;padding:11px 0;border-radius:999px;font-size:15px;font-weight:500;color:var(--mute);transition:.25s var(--ease)}
 .seg button.on{background:var(--ink);color:var(--ink-fg)}
 .seg button.on.mx{background:var(--rb);background-size:300% 100%;animation:slide 3s linear infinite;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+
+/* Tối ưu sheet chọn model và màn hình iPhone */
+#msheet{max-height:88dvh;overflow-y:auto;padding-bottom:calc(var(--sab) + 24px)}
+.mrow{min-height:68px}
+#realModel{overflow-wrap:anywhere}

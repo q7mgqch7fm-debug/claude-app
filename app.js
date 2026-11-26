@@ -1,10 +1,12 @@
 (()=>{
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const app=$('#app'),thread=$('#thread'),input=$('#input'),dock=$('#dock');
-const KEY='claude-clone-v1';
-let S={name:'bạn',apiKey:'',chats:[],cur:null,model:'sonnet',think:1};
-try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+// Chỉ lưu cài đặt; tuyệt đối không lưu nội dung hội thoại.
+const SETTINGS_KEY='claude-ui-settings-v2';
+try{localStorage.removeItem('claude-clone-v1')}catch(e){}
+let saved={};try{saved=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}')||{}}catch(e){}
+let S={name:typeof saved.name==='string'?saved.name:'bạn',apiKey:typeof saved.apiKey==='string'?saved.apiKey:'',chats:[],cur:null,model:['fable','opus','sonnet','haiku'].includes(saved.model)?saved.model:'sonnet',think:Number.isInteger(saved.think)?Math.max(0,Math.min(3,saved.think)):1};
+const save=()=>{try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({name:S.name,apiKey:S.apiKey,model:S.model,think:S.think}))}catch(e){}};
 let tab='chat',busy=false,incognito=false;
 
 /* star logo */
@@ -45,24 +47,15 @@ function greet(){
   const h=new Date().getHours(),p=h<11?'sáng':h<14?'trưa':h<18?'chiều':'tối';
   $('#greeting').textContent=`Chào buổi ${p}, ${S.name}`;
   $('#dName').textContent=S.name;$('#avatar').textContent=(S.name||'b')[0];
-  const r=S.chats[0],b=$('#recent');
-  if(r&&!incognito){b.hidden=false;b.innerHTML=`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.7 7L4 20l1.2-4.4A8 8 0 1 1 21 12z"/></svg><span></span><small>${fmtDate(r.t)}</small>`;b.querySelector('span').textContent=r.title;b.onclick=()=>openChat(r.id)}
-  else b.hidden=true;
+  const b=$('#recent');b.hidden=true;b.onclick=null;
 }
 const fmtDate=t=>{const d=new Date(t);return `${d.getDate()} thg ${d.getMonth()+1}`};
 
 /* chats */
-const cur=()=>S.chats.find(c=>c.id===S.cur)||(S.cur&&S.cur.msgs?S.cur:null);
+const cur=()=>S.cur;
 function newChat(){S.cur=null;thread.innerHTML='';updateHead();greet();closeDrawer()}
-function openChat(id){
-  S.cur=id;const c=cur();if(!c)return;go('chat');closeDrawer();
-  thread.innerHTML='';c.msgs.forEach(m=>addMsg(m.r,m.t,false));updateHead();scrollEnd();
-}
-function renderList(){
-  const l=$('#dList');l.innerHTML='';
-  if(!S.chats.length){l.innerHTML='<div class="d-none">Chưa có đoạn chat nào</div>';return}
-  S.chats.forEach(c=>{const b=document.createElement('button');b.className='d-item'+(c.id===S.cur?' on':'');b.textContent=c.title;b.onclick=()=>openChat(c.id);l.appendChild(b)});
-}
+function openChat(){newChat()}
+function renderList(){const l=$('#dList');l.innerHTML='<div class="d-none">Lịch sử chat đã tắt — cuộc trò chuyện chỉ tồn tại trong phiên hiện tại</div>'}
 
 /* markdown-lite */
 const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -96,25 +89,24 @@ const scrollEnd=()=>thread.scrollTo({top:thread.scrollHeight,behavior:'smooth'})
 
 /* replies */
 const demo=t=>{
-  if(/model|phiên bản|bạn là ai|ban la ai/i.test(t))return `Mình là Claude ${M().n}, do Anthropic tạo ra. Mức suy nghĩ hiện tại: ${TH[S.think].n}.`;
+  if(/model|phiên bản|bạn là ai|ban la ai/i.test(t))return `Bạn đang chọn chế độ hiển thị **${M().n}** với mức nỗ lực **${TH[S.think].n}**. Để minh bạch: model AI thực tế đang xử lý là Claude Haiku 5.5; tên trong bộ chọn là nhãn chế độ giao diện, không thay model nền.`;
   if(/^(hi|hello|chào|xin chào|alo)/i.test(t.trim()))return `Chào bạn! Mình là Claude, một trợ lý AI. Mình có thể giúp bạn khá nhiều việc, ví dụ:\n- **Trả lời câu hỏi và giải thích:** kiến thức, khái niệm, học tập\n- **Viết và chỉnh sửa:** email, bài luận, CV, dịch thuật\n- **Lập trình:** viết code, sửa lỗi, giải thích thuật toán\n- **Phân tích:** số liệu, tài liệu, file bạn tải lên\n- **Lên kế hoạch và brainstorm ý tưởng**\n\nBạn đang cần giúp việc gì không?`;
-  return `Đây là bản giao diện nên mình chưa kết nối với Claude thật. Vào **Cài đặt** (bấm tên của bạn ở menu bên trái) và nhập Anthropic API key để mình trả lời thật nhé.`;
+  return `Mình chưa được kết nối API nên chưa thể tạo câu trả lời AI thực. Hãy mở **Cài đặt** và thêm Anthropic API key để bật trả lời trực tiếp. Chế độ đang chọn: **${M().n} · ${TH[S.think].n}**.`;
 };
 async function reply(){
   const c=cur();
   if(!S.apiKey)return demo(c.msgs[c.msgs.length-1].t);
-  const lbl=M().n,bud=BUDGET[S.think];
-  const sys=`Bạn là Claude, trợ lý AI của Anthropic, đang chạy ở phiên bản ${lbl}. Nếu người dùng hỏi bạn là model nào, hãy trả lời bạn là Claude ${lbl}. Trả lời bằng ngôn ngữ người dùng đang dùng, rõ ràng.`;
+  const lbl=M().n;
+  const sys=`Bạn là trợ lý AI Claude. Chế độ giao diện người dùng đã chọn: ${lbl}. Model AI thực tế luôn cố định là Claude Haiku 5.5; lựa chọn Fable/Opus/Sonnet/Haiku chỉ là nhãn chế độ giao diện, KHÔNG thay đổi model API. Nếu được hỏi đang chọn chế độ nào, nêu ${lbl}. Nếu hỏi model AI thực tế, trả lời trung thực là Claude Haiku 5.5. Không được tuyên bố đang chạy Opus/Sonnet/Fable thật. Mức nỗ lực được chọn: ${TH[S.think].n}; áp dụng độ sâu tương ứng. Trả lời bằng ngôn ngữ người dùng đang dùng, rõ ràng.`;
   const msgs=c.msgs.map(m=>({role:m.r==='u'?'user':'assistant',content:m.t}));
-  const call=async th=>{
-    const body={model:REAL_MODEL,max_tokens:th?th+3000:2500,system:sys,messages:msgs};
-    if(th)body.thinking={type:'enabled',budget_tokens:th};
+  const call=async ()=>{
+    const body={model:REAL_MODEL,max_tokens:32000,system:sys,messages:msgs,thinking:{type:'adaptive'},output_config:{effort:['low','medium','high','max'][S.think]}};
     const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(body)});
     const j=await r.json();
     if(!r.ok)throw new Error(j.error&&j.error.message||'Lỗi '+r.status);
     return j.content.filter(x=>x.type==='text').map(x=>x.text).join('');
   };
-  try{return await call(bud)}catch(e){if(bud&&/think/i.test(e.message))return await call(0);throw e}
+  return await call();
 }
 async function stream(el,text){
   let i=0;const step=Math.max(2,Math.ceil(text.length/260));
@@ -128,18 +120,12 @@ async function stream(el,text){
 async function send(){
   const text=input.value.trim();if(!text||busy)return;
   busy=true;input.value='';resize();onType();
-  let c=cur();
-  if(!c){c={id:'c'+Date.now(),title:text.slice(0,40),t:Date.now(),msgs:[]};S.chats.unshift(c);S.cur=c.id}
-  c.msgs.push({r:'u',t:text});c.t=Date.now();
-  updateHead();addMsg('u',text);scrollEnd();
+  let c=cur();if(!c){c={id:'session-'+Date.now(),title:text.slice(0,40),t:Date.now(),msgs:[]};S.cur=c}
+  c.msgs.push({r:'u',t:text});updateHead();addMsg('u',text);scrollEnd();
   const th=document.createElement('div');th.className='thinkrow'+(S.think>=2?' hue':'');th.innerHTML='<span class="star tk">'+starSVG()+'</span>'+(S.think>0?'<span class="rbtext">Đang suy nghĩ</span>':'');thread.appendChild(th);scrollEnd();
-  let ans;
-  try{await new Promise(r=>setTimeout(r,S.apiKey?0:700));ans=await reply()}catch(e){ans='Không gọi được Claude: '+e.message}
-  th.remove();
-  const el=addMsg('a','');el.innerHTML='';
-  await stream(el,ans);
-  c.msgs.push({r:'a',t:ans});
-  if(!incognito)save();else{S.chats=S.chats.filter(x=>x!==c);S.cur=c}
+  let ans;try{await new Promise(r=>setTimeout(r,S.apiKey?0:250));ans=await reply()}catch(e){ans='Không gọi được Claude: '+e.message}
+  th.remove();const el=addMsg('a','');el.innerHTML='';await stream(el,ans);c.msgs.push({r:'a',t:ans});
+  // Tin nhắn chỉ nằm trong bộ nhớ phiên hiện tại, không ghi vào localStorage.
   renderList();busy=false;
 }
 
@@ -176,12 +162,12 @@ document.addEventListener('touchend',e=>{if(sx===null)return;const dx=e.changedT
 $('#settingsBtn').onclick=()=>{$('#setName').value=S.name;$('#setKey').value=S.apiKey;closeDrawer();app.classList.add('sheet-open')};
 $('#sheet-wrap').onclick=e=>{if(e.target.id==='sheet-wrap')app.classList.remove('sheet-open')};
 $('#saveSet').onclick=()=>{S.name=$('#setName').value.trim()||'bạn';S.apiKey=$('#setKey').value.trim();save();greet();app.classList.remove('sheet-open');toast('Đã lưu')};
-$('#clearAll').onclick=()=>{if(confirm('Xóa toàn bộ đoạn chat?')){S.chats=[];S.cur=null;save();newChat();app.classList.remove('sheet-open')}};
+$('#clearAll').onclick=()=>{S.chats=[];S.cur=null;try{localStorage.removeItem('claude-clone-v1')}catch(e){}newChat();app.classList.remove('sheet-open');toast('Đã xóa cuộc trò chuyện trong phiên này')};
 
 /* model + thinking */
-const REAL_MODEL='claude-haiku-5-5'; // model thật được gọi, rẻ nhất. Đổi ở đây nếu cần.
-const MODELS=[{id:'fable',n:'Fable 5.2',d:'Mạnh nhất, cho việc khó và dài'},{id:'opus',n:'Opus 5.5',d:'Suy luận sâu, code phức tạp'},{id:'sonnet',n:'Sonnet 5.5',d:'Cân bằng giữa nhanh và thông minh'},{id:'haiku',n:'Haiku 5.5',d:'Nhanh nhất cho việc hằng ngày'}];
-const TH=[{n:'Thấp'},{n:'Vừa'},{n:'Cao'},{n:'Max'}],BUDGET=[0,2000,5000,10000];
+const REAL_MODEL='claude-haiku-5-5'; // Model nền cố định, tiết kiệm; lựa chọn bên dưới chỉ đổi nhãn chế độ.
+const MODELS=[{id:'fable',n:'Fable 5.2',d:'Chế độ giao diện cho tác vụ khó (model nền không đổi)'},{id:'opus',n:'Opus 5.5',d:'Chế độ giao diện ưu tiên suy luận sâu'},{id:'sonnet',n:'Sonnet 5.5',d:'Chế độ giao diện cân bằng'},{id:'haiku',n:'Haiku 5.5',d:'Chế độ giao diện ưu tiên tốc độ'}];
+const TH=[{n:'Thấp'},{n:'Vừa'},{n:'Cao'},{n:'Tối đa'}];
 const M=()=>MODELS.find(m=>m.id===S.model)||MODELS[2];
 const composer=$('.composer');let flashT;
 function updatePill(){
@@ -201,10 +187,10 @@ $('#msheet-wrap').onclick=e=>{
   if(m){S.model=m.dataset.m;save();updatePill();renderModelSheet();flash();if(navigator.vibrate)navigator.vibrate(8);setTimeout(()=>app.classList.remove('msheet-open'),550)}
   if(t){S.think=+t.dataset.t;save();updatePill();renderModelSheet();flash()}
 };
-$('#settingsBtn').addEventListener('click',()=>{$('#realModel').textContent='Model thật được gọi: '+REAL_MODEL+'. Tên model ở nút chọn chỉ là nhãn hiển thị.'});
+$('#settingsBtn').addEventListener('click',()=>{$('#realModel').textContent='Model nền cố định: Claude Haiku 5.5 ('+REAL_MODEL+'). Bộ chọn Fable / Opus / Sonnet / Haiku chỉ đổi nhãn chế độ và mức nỗ lực, không đổi model API.'});
 
 /* boot */
-greet();updateHead();updatePill();
+S.chats=[];S.cur=null;greet();updateHead();updatePill();
 setTimeout(()=>$('#splash').classList.add('out'),1500);
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 })();
