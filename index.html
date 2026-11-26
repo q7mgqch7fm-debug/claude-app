@@ -70,6 +70,7 @@
 
   <div id="dock" class="dock">
     <button class="recent" id="recent" hidden></button>
+    <button class="modelpill" id="modelPill" aria-label="Chọn model"><span id="mpName"></span><i id="mpThink"></i><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
     <div class="composer">
       <button class="round soft" id="plusBtn" aria-label="Thêm"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
       <textarea id="input" rows="1" placeholder="Nhập hoặc giữ để nói" enterkeyhint="send"></textarea>
@@ -103,8 +104,17 @@
     <label>Tên của bạn<input id="setName" type="text" placeholder="Tên hiển thị" autocomplete="off"></label>
     <label>Anthropic API key (tùy chọn)<input id="setKey" type="password" placeholder="sk-ant-..." autocomplete="off" autocapitalize="off"></label>
     <p class="hint">Có API key thì Claude trả lời thật. Key chỉ lưu trong thiết bị này.</p>
+    <p class="hint" id="realModel"></p>
     <button class="pill wide" id="saveSet">Lưu</button>
     <button class="link" id="clearAll">Xóa toàn bộ chat</button>
+  </div></div>
+
+  <div id="msheet-wrap"><div id="msheet">
+    <div class="grab"></div>
+    <h3>Model</h3>
+    <div id="mlist"></div>
+    <h3 class="sub">Mức độ suy nghĩ</h3>
+    <div class="seg" id="seg"></div>
   </div></div>
 
   <div id="toast"></div>

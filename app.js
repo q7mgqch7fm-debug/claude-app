@@ -2,18 +2,18 @@
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const app=$('#app'),thread=$('#thread'),input=$('#input'),dock=$('#dock');
 const KEY='claude-clone-v1';
-let S={name:'bạn',apiKey:'',chats:[],cur:null};
+let S={name:'bạn',apiKey:'',chats:[],cur:null,model:'sonnet',think:1};
 try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 let tab='chat',busy=false,incognito=false;
 
 /* star logo */
-const RAYS=[[0,46],[31,34],[59,43],[91,31],[121,47],[150,35],[181,41],[209,30],[241,45],[271,33],[301,43],[331,32]];
-const starSVG=()=>{let p='';RAYS.forEach(([d,L])=>{const a=d*Math.PI/180,s=Math.sin(a),c=Math.cos(a),px=c,py=s,r0=3,w0=3.4,w1=3.7;
-const f=n=>n.toFixed(1),X=(r,w)=>[50+r*s+w*px,50-r*c+w*py],Y=(r,w)=>[50+r*s-w*px,50-r*c-w*py];
+const RAYS=[[0,46],[29,31],[62,42],[88,36],[119,47],[152,33],[178,40],[212,29],[243,44],[268,35],[299,41],[330,30]];
+const starSVG=(th=0)=>{const r0=th?3:8,w0=th?3.2:1.7,w1=th?4.2:3.4;let p='';RAYS.forEach(([d,L])=>{const a=d*Math.PI/180,s=Math.sin(a),c=Math.cos(a);
+const f=n=>n.toFixed(1),X=(r,w)=>[50+r*s+w*c,50-r*c+w*s],Y=(r,w)=>[50+r*s-w*c,50-r*c-w*s];
 const q=[X(r0,w0),X(L,w1),Y(L,w1),Y(r0,w0)].map(v=>f(v[0])+','+f(v[1])).join(' ');
 p+=`<polygon points="${q}"/><circle cx="${f(50+L*s)}" cy="${f(50-L*c)}" r="${w1}"/>`});
-return `<svg viewBox="0 0 100 100" fill="currentColor">${p}<circle cx="50" cy="50" r="8.5"/></svg>`};
+return `<svg viewBox="0 0 100 100" fill="currentColor">${p}</svg>`};
 const fillStars=()=>$$('[data-star]').forEach(e=>e.innerHTML=starSVG());
 fillStars();
 
@@ -96,17 +96,25 @@ const scrollEnd=()=>thread.scrollTo({top:thread.scrollHeight,behavior:'smooth'})
 
 /* replies */
 const demo=t=>{
+  if(/model|phiên bản|bạn là ai|ban la ai/i.test(t))return `Mình là Claude ${M().n}, do Anthropic tạo ra. Mức suy nghĩ hiện tại: ${TH[S.think].n}.`;
   if(/^(hi|hello|chào|xin chào|alo)/i.test(t.trim()))return `Chào bạn! Mình là Claude, một trợ lý AI. Mình có thể giúp bạn khá nhiều việc, ví dụ:\n- **Trả lời câu hỏi và giải thích:** kiến thức, khái niệm, học tập\n- **Viết và chỉnh sửa:** email, bài luận, CV, dịch thuật\n- **Lập trình:** viết code, sửa lỗi, giải thích thuật toán\n- **Phân tích:** số liệu, tài liệu, file bạn tải lên\n- **Lên kế hoạch và brainstorm ý tưởng**\n\nBạn đang cần giúp việc gì không?`;
   return `Đây là bản giao diện nên mình chưa kết nối với Claude thật. Vào **Cài đặt** (bấm tên của bạn ở menu bên trái) và nhập Anthropic API key để mình trả lời thật nhé.`;
 };
 async function reply(){
   const c=cur();
   if(!S.apiKey)return demo(c.msgs[c.msgs.length-1].t);
-  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,system:'Trả lời bằng ngôn ngữ người dùng đang dùng, ngắn gọn và rõ ràng.',messages:c.msgs.map(m=>({role:m.r==='u'?'user':'assistant',content:m.t}))})});
-  const j=await r.json();
-  if(!r.ok)throw new Error(j.error&&j.error.message||'Lỗi '+r.status);
-  return j.content.map(x=>x.text||'').join('');
+  const lbl=M().n,bud=BUDGET[S.think];
+  const sys=`Bạn là Claude, trợ lý AI của Anthropic, đang chạy ở phiên bản ${lbl}. Nếu người dùng hỏi bạn là model nào, hãy trả lời bạn là Claude ${lbl}. Trả lời bằng ngôn ngữ người dùng đang dùng, rõ ràng.`;
+  const msgs=c.msgs.map(m=>({role:m.r==='u'?'user':'assistant',content:m.t}));
+  const call=async th=>{
+    const body={model:REAL_MODEL,max_tokens:th?th+3000:2500,system:sys,messages:msgs};
+    if(th)body.thinking={type:'enabled',budget_tokens:th};
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(body)});
+    const j=await r.json();
+    if(!r.ok)throw new Error(j.error&&j.error.message||'Lỗi '+r.status);
+    return j.content.filter(x=>x.type==='text').map(x=>x.text).join('');
+  };
+  try{return await call(bud)}catch(e){if(bud&&/think/i.test(e.message))return await call(0);throw e}
 }
 async function stream(el,text){
   let i=0;const step=Math.max(2,Math.ceil(text.length/260));
@@ -124,7 +132,7 @@ async function send(){
   if(!c){c={id:'c'+Date.now(),title:text.slice(0,40),t:Date.now(),msgs:[]};S.chats.unshift(c);S.cur=c.id}
   c.msgs.push({r:'u',t:text});c.t=Date.now();
   updateHead();addMsg('u',text);scrollEnd();
-  const th=document.createElement('span');th.className='star think';th.innerHTML=starSVG();thread.appendChild(th);scrollEnd();
+  const th=document.createElement('div');th.className='thinkrow'+(S.think>=2?' hue':'');th.innerHTML='<span class="star tk">'+starSVG()+'</span>'+(S.think>0?'<span class="rbtext">Đang suy nghĩ</span>':'');thread.appendChild(th);scrollEnd();
   let ans;
   try{await new Promise(r=>setTimeout(r,S.apiKey?0:700));ans=await reply()}catch(e){ans='Không gọi được Claude: '+e.message}
   th.remove();
@@ -170,8 +178,33 @@ $('#sheet-wrap').onclick=e=>{if(e.target.id==='sheet-wrap')app.classList.remove(
 $('#saveSet').onclick=()=>{S.name=$('#setName').value.trim()||'bạn';S.apiKey=$('#setKey').value.trim();save();greet();app.classList.remove('sheet-open');toast('Đã lưu')};
 $('#clearAll').onclick=()=>{if(confirm('Xóa toàn bộ đoạn chat?')){S.chats=[];S.cur=null;save();newChat();app.classList.remove('sheet-open')}};
 
+/* model + thinking */
+const REAL_MODEL='claude-haiku-5-5'; // model thật được gọi, rẻ nhất. Đổi ở đây nếu cần.
+const MODELS=[{id:'fable',n:'Fable 5.2',d:'Mạnh nhất, cho việc khó và dài'},{id:'opus',n:'Opus 5.5',d:'Suy luận sâu, code phức tạp'},{id:'sonnet',n:'Sonnet 5.5',d:'Cân bằng giữa nhanh và thông minh'},{id:'haiku',n:'Haiku 5.5',d:'Nhanh nhất cho việc hằng ngày'}];
+const TH=[{n:'Thấp'},{n:'Vừa'},{n:'Cao'},{n:'Max'}],BUDGET=[0,2000,5000,10000];
+const M=()=>MODELS.find(m=>m.id===S.model)||MODELS[2];
+const composer=$('.composer');let flashT;
+function updatePill(){
+  $('#mpName').textContent=M().n;const t=$('#mpThink');t.textContent=TH[S.think].n;
+  $('#modelPill').classList.toggle('max',S.think===3);
+  composer.classList.toggle('rb',S.think===3);
+}
+function flash(){composer.classList.add('rb','burst');clearTimeout(flashT);flashT=setTimeout(()=>{composer.classList.remove('burst');composer.classList.toggle('rb',S.think===3)},1500)}
+function renderModelSheet(){
+  $('#mlist').innerHTML=MODELS.map(m=>`<button class="mrow${m.id===S.model?' on':''}" data-m="${m.id}"><span><b>${m.n}</b><small>${m.d}</small></span><i class="chk"></i></button>`).join('');
+  $('#seg').innerHTML=TH.map((t,i)=>`<button class="${i===S.think?'on':''}${i===3?' mx':''}" data-t="${i}">${t.n}</button>`).join('');
+}
+$('#modelPill').onclick=()=>{renderModelSheet();app.classList.add('msheet-open')};
+$('#msheet-wrap').onclick=e=>{
+  if(e.target.id==='msheet-wrap')return app.classList.remove('msheet-open');
+  const m=e.target.closest('[data-m]'),t=e.target.closest('[data-t]');
+  if(m){S.model=m.dataset.m;save();updatePill();renderModelSheet();flash();if(navigator.vibrate)navigator.vibrate(8);setTimeout(()=>app.classList.remove('msheet-open'),550)}
+  if(t){S.think=+t.dataset.t;save();updatePill();renderModelSheet();flash()}
+};
+$('#settingsBtn').addEventListener('click',()=>{$('#realModel').textContent='Model thật được gọi: '+REAL_MODEL+'. Tên model ở nút chọn chỉ là nhãn hiển thị.'});
+
 /* boot */
-greet();updateHead();
+greet();updateHead();updatePill();
 setTimeout(()=>$('#splash').classList.add('out'),1500);
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 })();
