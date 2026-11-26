@@ -8,9 +8,12 @@ const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 let tab='chat',busy=false,incognito=false;
 
 /* star logo */
-const starSVG=()=>{let p='';for(let i=0;i<12;i++){const a=i*Math.PI/6,L=[44,35,41,32,43,36][i%6];
-p+=`<line x1="${(50+9*Math.sin(a)).toFixed(1)}" y1="${(50-9*Math.cos(a)).toFixed(1)}" x2="${(50+L*Math.sin(a)).toFixed(1)}" y2="${(50-L*Math.cos(a)).toFixed(1)}"/>`}
-return `<svg viewBox="0 0 100 100" stroke="currentColor" stroke-width="6.5" stroke-linecap="round">${p}</svg>`};
+const RAYS=[[0,46],[31,34],[59,43],[91,31],[121,47],[150,35],[181,41],[209,30],[241,45],[271,33],[301,43],[331,32]];
+const starSVG=()=>{let p='';RAYS.forEach(([d,L])=>{const a=d*Math.PI/180,s=Math.sin(a),c=Math.cos(a),px=c,py=s,r0=3,w0=3.4,w1=3.7;
+const f=n=>n.toFixed(1),X=(r,w)=>[50+r*s+w*px,50-r*c+w*py],Y=(r,w)=>[50+r*s-w*px,50-r*c-w*py];
+const q=[X(r0,w0),X(L,w1),Y(L,w1),Y(r0,w0)].map(v=>f(v[0])+','+f(v[1])).join(' ');
+p+=`<polygon points="${q}"/><circle cx="${f(50+L*s)}" cy="${f(50-L*c)}" r="${w1}"/>`});
+return `<svg viewBox="0 0 100 100" fill="currentColor">${p}<circle cx="50" cy="50" r="8.5"/></svg>`};
 const fillStars=()=>$$('[data-star]').forEach(e=>e.innerHTML=starSVG());
 fillStars();
 
